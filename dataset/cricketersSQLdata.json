@@ -1,0 +1,50 @@
+{
+	"name": "cricketersSQLdata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "dimid",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "age",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "homecountry",
+				"type": "nvarchar"
+			},
+			{
+				"name": "iplteam",
+				"type": "nvarchar"
+			},
+			{
+				"name": "lastmodifieddate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "hashcolumn",
+				"type": "binary"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "cricketers"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

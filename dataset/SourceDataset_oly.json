@@ -1,0 +1,35 @@
+{
+	"name": "SourceDataset_oly",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase_connection_upsert",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "first_name",
+				"type": "varchar"
+			},
+			{
+				"name": "gender",
+				"type": "varchar"
+			},
+			{
+				"name": "Country",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "emp_data"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

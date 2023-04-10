@@ -1,0 +1,173 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "cricketersCSV",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "cricketersSQLdata",
+						"type": "DatasetReference"
+					},
+					"name": "SQLtable"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "cricketersSQLdata",
+						"type": "DatasetReference"
+					},
+					"name": "SQLInsert1"
+				},
+				{
+					"dataset": {
+						"referenceName": "cricketersSQLdata",
+						"type": "DatasetReference"
+					},
+					"name": "SQLUpdate1"
+				},
+				{
+					"dataset": {
+						"referenceName": "outputBlobSink",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "ComputeHash"
+				},
+				{
+					"name": "lookup1"
+				},
+				{
+					"name": "Conditionalsplit1"
+				},
+				{
+					"name": "alterRow1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          dimid as string,",
+				"          name as string,",
+				"          age as string,",
+				"          homecountry as string,",
+				"          iplteam as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source(output(",
+				"          dimid as integer,",
+				"          name as string,",
+				"          age as integer,",
+				"          homecountry as string,",
+				"          iplteam as string,",
+				"          lastmodifieddate as timestamp,",
+				"          hashcolumn as binary",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SQLtable",
+				"source1 derive(Hash = toBinary(md5(name+homecountry+iplteam)),",
+				"          dimidInt = toInteger(dimid),",
+				"          datemodified = currentDate()) ~> ComputeHash",
+				"ComputeHash, SQLtable lookup(dimidInt == SQLtable@dimid,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookup1",
+				"lookup1 split(isNull(SQLtable@dimid),",
+				"     !isNull(SQLtable@dimid) && notEquals(hashcolumn, Hash),",
+				"     disjoint: false) ~> Conditionalsplit1@(NewRecords, Update, NoUpdates)",
+				"Conditionalsplit1@Update alterRow(updateIf(true())) ~> alterRow1",
+				"Conditionalsplit1@NewRecords sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          dimid as integer,",
+				"          name as string,",
+				"          age as integer,",
+				"          homecountry as string,",
+				"          iplteam as string,",
+				"          lastmodifieddate as timestamp,",
+				"          hashcolumn as binary",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          dimid = Conditionalsplit1@NewRecords@dimid,",
+				"          name = Conditionalsplit1@NewRecords@name,",
+				"          age = Conditionalsplit1@NewRecords@age,",
+				"          homecountry = Conditionalsplit1@NewRecords@homecountry,",
+				"          iplteam = Conditionalsplit1@NewRecords@iplteam,",
+				"          lastmodifieddate,",
+				"          hashcolumn = Hash",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> SQLInsert1",
+				"alterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          dimid as integer,",
+				"          name as string,",
+				"          age as integer,",
+				"          homecountry as string,",
+				"          iplteam as string,",
+				"          lastmodifieddate as timestamp,",
+				"          hashcolumn as binary",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['dimid'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          dimid = Conditionalsplit1@Update@dimid,",
+				"          name = Conditionalsplit1@Update@name,",
+				"          age = Conditionalsplit1@Update@age,",
+				"          homecountry = Conditionalsplit1@Update@homecountry,",
+				"          iplteam = Conditionalsplit1@Update@iplteam,",
+				"          lastmodifieddate = datemodified,",
+				"          hashcolumn = Hash",
+				"     )) ~> SQLUpdate1",
+				"Conditionalsplit1@NoUpdates sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          dimid = Conditionalsplit1@NoUpdates@dimid,",
+				"          name = Conditionalsplit1@NoUpdates@name,",
+				"          age = Conditionalsplit1@NoUpdates@age,",
+				"          homecountry = Conditionalsplit1@NoUpdates@homecountry,",
+				"          iplteam = Conditionalsplit1@NoUpdates@iplteam",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
