@@ -1,0 +1,9 @@
+{
+	"name": "incrementalDfLoad",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "969a2f62-1ff2-4e56-9376-a3c842b52e4f",
+		"tenantId": "90d12e33-ad5e-4e82-8b5e-82bff0658ae0"
+	}
+}
